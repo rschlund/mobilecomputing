@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Gamedev Canvas Workshop - lesson 8: track the score and win</title>
+    <style>* { padding: 0; margin: 0; } canvas { background: #eee; display: block; margin: 0 auto; }</style>
+</head>
+<boballSpeedy>
+
+<canvas id="myCanvas" width="800" height="400"></canvas>
+
+<script>
+    var canvas = document.getElementById("myCanvas");
+    var ctx = canvas.getContext("2d");
+    var width = window.innerWidth;
+	
+	// So we need to calculate the proper scaled width
+	// that should work well with every resolution
+	var ratio = canvas.height/canvas.width;
+	var height = window.innerHeight;
+	
+	canvas.style.width = width + "px";
+	canvas.style.height = height + "px";
+
+    var ballRadius = 5;
+    var ballSpeedx = 2;
+    var ballSpeedy = -2;
+    var wandTraegheit = 0.55;
+    var x = canvas.width/2;
+    var y = canvas.height-30;
+    var rightPressed = false;
+    var leftPressed = false;
+    var brickCount = 2;
+    var bricks = [];
+    //quer
+    bricks[0] = { x: 100, y: 200, width: 300, height: 5};
+    //längs
+    bricks[1] = { x: 300, y: 100, width: 8, height: 100};
+
+    document.addEventListener("keydown", keyDownHandler, false);
+
+    function keyDownHandler(e) {
+        if(e.keyCode == 39) {
+            ballSpeedx *= 1.05;
+        }
+        else if(e.keyCode == 37) {
+            ballSpeedy *= 1.05;
+        }
+    }
+    //Assumes smallv < bigb, returns v if smallv < value < bigv
+    //Otherwise smallv if x < smallv or bigv if x > bigv
+    function valueBetween(value, smallv, bigv){
+        return value < smallv ? smallv : value > bigv ? bigv : value;
+    }
+    
+    //Pythagoras distance between two points
+    function dist(x1, y1, x2, y2) {
+		var dx = x1 - x2, dy = y1 - y2;
+		return Math.sqrt(dx * dx + dy * dy);
+	}
+    
+    function collisionDetection() {
+        for(var c=0; c<brickCount; c++) {
+            var b = bricks[c];
+            if(dist(valueBetween(x, b.x, b.x + b.width),valueBetween(y, b.y, b.y + b.height), x , y) < ballRadius){
+                if (valueBetween(x, b.x, b.x + b.width) == x){
+                    if(y > b.y + b.height){ //Unterhalb
+                        //Sicherstellen, dass Kugel nicht an der Wand hängenbleibt
+                        y = y + ballRadius * 0.3;
+                        //alert("Kugel unterhalb");
+                    } else { //Oberhalb
+                        y = y - ballRadius * 0.3;
+                        //alert("Kugel oberhalb");                    
+                    }
+                    ballSpeedy = -(ballSpeedy * wandTraegheit);
+                    //ballSpeedy = ballSpeedy * wandTraegheit;
+                    //alert("Speedy " + ballSpeedy);
+                } else {
+                    if(x > b.x + b.width){ //Rechts
+                        x = x + ballRadius * 0.3;
+                        //alert("Kugel rechts");
+                    } else { //Links
+                        x = x - ballRadius * 0.3;
+                        //alert("Kugel links");                    
+                    }
+                    ballSpeedx = -(ballSpeedx * wandTraegheit);
+                    //ballSpeedx = ballSpeedx * wandTraegheit;
+                    //alert("Speedx " + ballSpeedx);
+                }
+            }
+        }
+    }
+    function drawBall() {
+        ctx.beginPath();
+        ctx.arc(x, y, ballRadius, 0, Math.PI*2);
+        ctx.fillStyle = "#0095DD";
+        ctx.fill();
+        ctx.closePath();
+    }
+    function drawBricks() {
+        for(var c=0;c<brickCount;c++){
+            ctx.beginPath();
+            ctx.rect(bricks[c].x, bricks[c].y, bricks[c].width, bricks[c].height);
+            ctx.fillStyle = "#0095DD";
+            ctx.fill();
+            ctx.closePath();
+        }
+    }
+    function draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        drawBricks();
+        drawBall();
+        collisionDetection();
+        if(x + ballSpeedx > canvas.width-ballRadius || x + ballSpeedx < ballRadius) {
+            ballSpeedx = -ballSpeedx;
+        }
+        if(y + ballSpeedy < ballRadius) {
+            ballSpeedy = -ballSpeedy;
+        }
+        else if(y + ballSpeedy > canvas.height-ballRadius) {
+            ballSpeedy = -ballSpeedy;
+            /*if(x > paddleX && x < paddleX + paddleWidth) {
+                ballSpeedy = -ballSpeedy;
+            }
+            else {
+                alert("GAME OVER");
+                document.location.reload();
+            }*/
+        }
+        x += ballSpeedx;
+        y += ballSpeedy;
+    }
+    setInterval(draw, 10);
+</script>
+
+</boballSpeedy>
+</html>
